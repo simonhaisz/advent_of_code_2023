@@ -55,39 +55,50 @@ fn find_last_digit(line: &str) -> char {
 
 fn parse_digits(line: &str) -> Vec<char> {
 	let mut digits = vec![];
-	let mut text_buffer = String::new();
 
-	for c in line.chars() {
-		if c.is_ascii_digit() {
-			digits.push(c);
-			text_buffer.clear();
-		} else {
-			text_buffer.push(c);
+	let targets = vec![
+		"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+		"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+	];
 
-			if let Some(digit) = parse_digit(&text_buffer) {
-				digits.push(digit);
-				text_buffer.clear();
-			}
+	for target in targets {
+		let matches = find_matches(line, target);
+
+		for m in matches {
+			let digit = if target.len() == 1 {
+				target.chars().nth(0).unwrap()
+			} else {
+				match target {
+					"zero" => '0',
+					"one" => '1',
+					"two" => '2',
+					"three" => '3',
+					"four" => '4',
+					"five" => '5',
+					"six" => '6',
+					"seven" => '7',
+					"eight" => '8',
+					"nine" => '9',
+					_ => panic!("unexpected text digit '{target}'")
+				}
+			};
+			digits.push((m, digit));
 		}
 	}
 
-	digits
+	digits.sort_by(|(index_a, _), (index_b, _)| index_a.cmp(index_b));
+
+	digits.into_iter().map(|(_, digit)| digit).collect()
 }
 
-fn parse_digit(text: &str) -> Option<char> {
-	match text {
-		"zero" => Some('0'),
-		"one" => Some('1'),
-		"two" => Some('2'),
-		"three" => Some('3'),
-		"four" => Some('4'),
-		"five" => Some('5'),
-		"six" => Some('6'),
-		"seven" => Some('7'),
-		"eight" => Some('8'),
-		"nine" => Some('9'),
-		_ => None
+fn find_matches(line: &str, target: &str) -> Vec<usize> {
+	let mut matches = vec![];
+
+	for (index, _) in line.match_indices(target) {
+		matches.push(index);
 	}
+	
+	matches
 }
 
 #[cfg(test)]
