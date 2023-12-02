@@ -1,12 +1,16 @@
 #![allow(dead_code)]
 
+mod calibration;
+
 use calibration::calibration_total;
 
 use crate::calibration::ParseMode;
 
-mod calibration;
+use util::Timer;
 
 fn main() -> std::io::Result<()> {
+    let _timer = Timer::new();
+    
     let document = std::fs::read_to_string("./day_01/input.txt")?;
 
     part_2(&document);

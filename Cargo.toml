@@ -1,3 +1,4 @@
 [workspace]
 resolver = "2"
-members = ["day_*"]
+members = ["day_*", "util"]
+default-members = ["day_01"]
