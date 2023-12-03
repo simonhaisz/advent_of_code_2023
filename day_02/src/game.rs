@@ -1,6 +1,16 @@
 use std::str::FromStr;
 
 use lazy_regex::{regex_captures, regex};
+use pest::Parser;
+
+use crate::bag_of_cubes::{BagOfCubesParser, Rule};
+
+enum ParseMode {
+	Custom,
+	Pest
+}
+
+const PARSE_MODE: ParseMode = ParseMode::Custom;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct CubeSet {
@@ -84,36 +94,104 @@ impl FromStr for Game {
     type Err = ParseGameError;
 
     fn from_str(line: &str) -> Result<Self, Self::Err> {
-        let (_, id) = regex_captures!(r"Game (?<id>\d+):", line).unwrap();
-		let id = id.parse::<u32>().unwrap();
-
-		let mut game = Game::new(id);
-
-		let start_index = line.find(":").unwrap();
-		let cube_sets = &line[start_index+1..];
-		let cube_sets = cube_sets.split(";");
-
-		for set in cube_sets {
-			let cube_set_regex = regex!(r"\s(?<count>\d+)\s(?<label>\w+)(?:,|$)");
-
-			let mut red = 0;
-			let mut green = 0;
-			let mut blue = 0;
-			for caps in cube_set_regex.captures_iter(set) {
-				let count = caps.name("count").unwrap().as_str().parse::<u32>().unwrap();
-				let label = caps.name("label").unwrap().as_str();
-				match label {
-					"red" => red = count,
-					"green" => green = count,
-					"blue" => blue = count,
-					_ => panic!("unknown label '{label}'"),
+		
+		let game = match PARSE_MODE {
+			ParseMode::Custom => {
+				let mut id: Option<u32> = None;
+				let mut cube_sets = vec![];
+				let result = BagOfCubesParser::parse(Rule::game, line).unwrap();
+				for game in result.into_iter() {
+					match game.as_rule() {
+						Rule::game => {
+							for game_property in game.into_inner() {
+								match game_property.as_rule() {
+									Rule::game_id => {
+										id = Some(game_property.as_str().parse::<u32>().unwrap());
+									}
+									Rule::cube_set => {
+										let mut red = 0;
+										let mut green = 0;
+										let mut blue = 0;
+										for cube in game_property.into_inner() {
+											match cube.as_rule() {
+												Rule::cube => {
+													let mut count: Option<u32> = None;
+													let mut color: Option<&str> = None;
+													for cube_prop in cube.into_inner() {
+														match cube_prop.as_rule() {
+															Rule::cube_count => {
+																count = Some(cube_prop.as_str().parse::<u32>().unwrap());
+															},
+															Rule::color => {
+																color = Some(cube_prop.as_str());
+															},
+															_ => unimplemented!()
+														}
+													}
+													match color.unwrap() {
+														"red" => red = count.unwrap(),
+														"green" => green = count.unwrap(),
+														"blue" => blue = count.unwrap(),
+														_ => unimplemented!()
+													}
+												},
+												_ => unimplemented!()
+											}
+										}
+										cube_sets.push(CubeSet::new(red, green, blue));
+									},
+									_ => unimplemented!()
+								}
+							}
+						},
+						_ => unimplemented!()
+					}
 				}
-			}
+		
+				let mut game = Game::new(id.unwrap());
+		
+				for cubes in cube_sets {
+					game.add_set(cubes);
+				}
 
-			game.add_set(CubeSet::new(red, green, blue));
-		}
+				game
+			},
+			ParseMode::Pest => {
+				let (_, id) = regex_captures!(r"Game (?<id>\d+):", line).unwrap();
+				let id = id.parse::<u32>().unwrap();
+		
+				let mut game = Game::new(id);
+		
+				let start_index = line.find(":").unwrap();
+				let cube_sets = &line[start_index+1..];
+				let cube_sets = cube_sets.split(";");
+		
+				for set in cube_sets {
+					let cube_set_regex = regex!(r"\s(?<count>\d+)\s(?<label>\w+)(?:,|$)");
+		
+					let mut red = 0;
+					let mut green = 0;
+					let mut blue = 0;
+					for caps in cube_set_regex.captures_iter(set) {
+						let count = caps.name("count").unwrap().as_str().parse::<u32>().unwrap();
+						let label = caps.name("label").unwrap().as_str();
+						match label {
+							"red" => red = count,
+							"green" => green = count,
+							"blue" => blue = count,
+							_ => panic!("unknown label '{label}'"),
+						}
+					}
+		
+					game.add_set(CubeSet::new(red, green, blue));
+				}
+
+				game
+			}
+		};
 
 		Ok(game)
+		
     }
 }
 

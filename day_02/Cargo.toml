@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 util = { path = "../util", version = "0.1.0" }
 lazy-regex = "3.1.0"
+pest = "2.7.5"
+pest_derive = { version = "2.7.5", features = ["grammar-extras"] }

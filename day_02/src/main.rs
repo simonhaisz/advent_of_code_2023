@@ -1,9 +1,10 @@
-use std::str::FromStr;
-
-use game::{Game, CubeSet, valid_games_sum, minimum_bag_power_sum};
-use util::Timer;
 
 mod game;
+mod bag_of_cubes;
+
+use std::str::FromStr;
+use game::{Game, CubeSet, valid_games_sum, minimum_bag_power_sum};
+use util::Timer;
 
 fn main() -> std::io::Result<()> {
     let _timer = Timer::new();

@@ -1,0 +1,15 @@
+WHITESPACE = _{ " " }
+
+INTEGER = { ASCII_DIGIT+ }
+
+color = { "red" | "green" | "blue" }
+
+cube_count = { INTEGER }
+
+cube = { cube_count ~ color }
+
+cube_set = { cube ~ ("," ~ cube )* }
+
+game_id = { INTEGER }
+
+game = { "Game" ~ game_id ~ ":" ~ cube_set ~ (";" ~ cube_set )* }
