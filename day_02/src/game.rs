@@ -17,6 +17,10 @@ impl CubeSet {
 	pub fn subset(&self, other: &CubeSet) -> bool {
 		self.red >= other.red && self.green >= other.green && self.blue >= other.blue
 	}
+
+	pub fn power(&self) -> u32 {
+		self.red * self.green * self.blue
+	}
 }
 
 pub struct Game {
@@ -41,6 +45,20 @@ impl Game {
 		}
 		true
 	}
+
+	pub fn minimum_bag(&self) -> CubeSet {
+		let mut red = 0;
+		let mut green = 0;
+		let mut blue = 0;
+
+		for s in self.sets.iter() {
+			red = red.max(s.red);
+			green = green.max(s.green);
+			blue = blue.max(s.blue);
+		}
+
+		CubeSet::new(red, green, blue)
+	}
 }
 
 pub fn valid_games_sum(games: &[Game], bag: &CubeSet) -> u32 {
@@ -48,6 +66,14 @@ pub fn valid_games_sum(games: &[Game], bag: &CubeSet) -> u32 {
 		.iter()
 		.filter(|g| g.validate_bag(bag))
 		.map(|g| g.id)
+		.sum()
+}
+
+pub fn minimum_bag_power_sum(games: &[Game]) -> u32 {
+	games
+		.iter()
+		.map(|g| g.minimum_bag())
+		.map(|b| b.power())
 		.sum()
 }
 
@@ -180,7 +206,7 @@ mod tests {
 	}
 
 	#[test]
-	fn validate_game_sum() {
+	fn valid_games() {
 		let games = vec![
 			Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap(),
 			Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue").unwrap(),
@@ -191,5 +217,88 @@ mod tests {
 		let bag = CubeSet::new(12, 13, 14);
 		let sum = valid_games_sum(&games, &bag);
 		assert_eq!(8, sum);
+	}
+
+	#[test]
+	fn minimum_bag_game_1() {
+		let game = Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap();
+		let minimum_bag = game.minimum_bag();
+		assert_eq!(CubeSet::new(4, 2, 6), minimum_bag);
+	}
+
+	#[test]
+	fn minimum_bag_game_2() {
+		let game = Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue").unwrap();
+		let minimum_bag = game.minimum_bag();
+		assert_eq!(CubeSet::new(1, 3, 4), minimum_bag);
+	}
+
+	#[test]
+	fn minimum_bag_game_3() {
+		let game = Game::from_str("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red").unwrap();
+		let minimum_bag = game.minimum_bag();
+		assert_eq!(CubeSet::new(20, 13, 6), minimum_bag);
+	}
+
+	#[test]
+	fn minimum_bag_game_4() {
+		let game = Game::from_str("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red").unwrap();
+		let minimum_bag = game.minimum_bag();
+		assert_eq!(CubeSet::new(14, 3, 15), minimum_bag);
+	}
+
+	#[test]
+	fn minimum_bag_game_5() {
+		let game = Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap();
+		let minimum_bag = game.minimum_bag();
+		assert_eq!(CubeSet::new(6, 3, 2), minimum_bag);
+	}
+
+	#[test]
+	fn bag_power_game_1() {
+		let bag = CubeSet::new(4, 2, 6);
+		let power = bag.power();
+		assert_eq!(48, power);
+	}
+
+	#[test]
+	fn bag_power_game_2() {
+		let bag = CubeSet::new(1, 3, 4);
+		let power = bag.power();
+		assert_eq!(12, power);
+	}
+
+	#[test]
+	fn bag_power_game_3() {
+		let bag = CubeSet::new(20, 13, 6);
+		let power = bag.power();
+		assert_eq!(1560, power);
+	}
+
+	#[test]
+	fn bag_power_game_4() {
+		let bag = CubeSet::new(14, 3, 15);
+		let power = bag.power();
+		assert_eq!(630, power);
+	}
+
+	#[test]
+	fn bag_power_game_5() {
+		let bag = CubeSet::new(6, 3, 2);
+		let power = bag.power();
+		assert_eq!(36, power);
+	}
+
+	#[test]
+	fn minimum_bag_power() {
+		let games = vec![
+			Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap(),
+			Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue").unwrap(),
+			Game::from_str("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red").unwrap(),
+			Game::from_str("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red").unwrap(),
+			Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap(),
+		];
+		let sum = minimum_bag_power_sum(&games);
+		assert_eq!(2286, sum);
 	}
 }

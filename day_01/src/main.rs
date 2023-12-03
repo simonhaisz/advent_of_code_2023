@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 
 mod calibration;
 
@@ -18,6 +18,7 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn part_1(document: &str) {
     let total = calibration_total(document, ParseMode::Numeric);
 
