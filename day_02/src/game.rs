@@ -3,19 +3,23 @@ use std::str::FromStr;
 use lazy_regex::{regex_captures, regex};
 
 #[derive(PartialEq, Eq, Debug)]
-struct CubeSet {
+pub struct CubeSet {
 	red: u32,
 	green: u32,
 	blue: u32,
 }
 
 impl CubeSet {
-	fn new(red: u32, green: u32, blue: u32) -> Self {
+	pub fn new(red: u32, green: u32, blue: u32) -> Self {
 		Self { red, green, blue }
+	}
+
+	pub fn subset(&self, other: &CubeSet) -> bool {
+		self.red >= other.red && self.green >= other.green && self.blue >= other.blue
 	}
 }
 
-struct Game {
+pub struct Game {
 	id: u32,
 	sets: Vec<CubeSet>,
 }
@@ -28,10 +32,27 @@ impl Game {
 	pub fn add_set(&mut self, set: CubeSet) {
 		self.sets.push(set);
 	}
+
+	pub fn validate_bag(&self, bag: &CubeSet) -> bool {
+		for set in self.sets.iter() {
+			if !bag.subset(set) {
+				return false;
+			}
+		}
+		true
+	}
+}
+
+pub fn valid_games_sum(games: &[Game], bag: &CubeSet) -> u32 {
+	games
+		.iter()
+		.filter(|g| g.validate_bag(bag))
+		.map(|g| g.id)
+		.sum()
 }
 
 #[derive(Debug)]
-struct ParseGameError;
+pub struct ParseGameError;
 
 impl FromStr for Game {
     type Err = ParseGameError;
@@ -121,5 +142,54 @@ mod tests {
 		assert_eq!(2, game.sets.len());
 		assert_eq!(CubeSet::new(6, 3, 1), game.sets[0]);
 		assert_eq!(CubeSet::new(1, 2, 2), game.sets[1]);
+	}
+
+	#[test]
+	fn validate_game_1() {
+		let game = Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap();
+		let bag = CubeSet::new(12, 13, 14);
+		assert!(game.validate_bag(&bag));
+	}
+
+	#[test]
+	fn validate_game_2() {
+		let game = Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue").unwrap();
+		let bag = CubeSet::new(12, 13, 14);
+		assert!(game.validate_bag(&bag));
+	}
+
+	#[test]
+	fn validate_game_3() {
+		let game = Game::from_str("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red").unwrap();
+		let bag = CubeSet::new(12, 13, 14);
+		assert!(!game.validate_bag(&bag));
+	}
+
+	#[test]
+	fn validate_game_4() {
+		let game = Game::from_str("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red").unwrap();
+		let bag = CubeSet::new(12, 13, 14);
+		assert!(!game.validate_bag(&bag));
+	}
+
+	#[test]
+	fn validate_game_5() {
+		let game = Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap();
+		let bag = CubeSet::new(12, 13, 14);
+		assert!(game.validate_bag(&bag));
+	}
+
+	#[test]
+	fn validate_game_sum() {
+		let games = vec![
+			Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap(),
+			Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue").unwrap(),
+			Game::from_str("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red").unwrap(),
+			Game::from_str("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red").unwrap(),
+			Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap(),
+		];
+		let bag = CubeSet::new(12, 13, 14);
+		let sum = valid_games_sum(&games, &bag);
+		assert_eq!(8, sum);
 	}
 }
