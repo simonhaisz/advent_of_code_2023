@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, fs::File, io::{BufReader, BufRead}};
 
 use lazy_regex::regex_captures;
 
@@ -35,7 +35,7 @@ impl FromStr for Card {
     type Err = ParseCardError;
 
     fn from_str(text: &str) -> Result<Self, Self::Err> {
-        let (_, id, winners, numbers) = regex_captures!(r"Card (?<id>\d+): (?<winners>[\d\s]*) \| (?<numbers>[\d\s]*)", text).unwrap();
+        let (_, id, winners, numbers) = regex_captures!(r"Card\s+(?<id>\d+): (?<winners>[\d\s]*) \| (?<numbers>[\d\s]*)", text).unwrap();
 
 		let id = id.parse::<u32>().unwrap();
 		let number_splitter = |text: &str| {
@@ -50,6 +50,25 @@ impl FromStr for Card {
 
 		Ok(Card { id, winners, numbers })
     }
+}
+
+pub fn cards_total_points(file: File) -> u32 {
+	let mut total_points = 0;
+
+	let lines = BufReader::new(file).lines();
+
+	for line in lines {
+		let line = line.unwrap();
+		if line.is_empty() {
+			continue;
+		}
+
+		let card = Card::from_str(&line).unwrap();
+
+		total_points += card.points();
+	}
+
+	total_points
 }
 
 #[cfg(test)]
@@ -108,5 +127,13 @@ mod tests {
 		let points = card.points();
 
 		assert_eq!(0, points);
+	}
+
+	#[test]
+	fn example_cards_points_total() {
+		let file = File::open("./example.txt").unwrap();
+		let total_points = cards_total_points(file);
+
+		assert_eq!(13, total_points)
 	}
 }
