@@ -17,7 +17,6 @@ struct Symbol {
 }
 
 struct Gear {
-	symbol: Symbol,
 	first_part_number: Number,
 	second_part_number: Number,
 }
@@ -29,8 +28,6 @@ impl Gear {
 }
 
 pub struct Schematic {
-	width: u32,
-	height: u32,
 	numbers: Vec<Number>,
 	symbols: Vec<Symbol>,
 }
@@ -62,8 +59,8 @@ impl Number {
 }
 
 impl Schematic {
-	fn new(width: u32, height: u32, numbers: Vec<Number>, symbols: Vec<Symbol>) -> Self {
-		Self { width, height, numbers, symbols }
+	fn new(numbers: Vec<Number>, symbols: Vec<Symbol>) -> Self {
+		Self { numbers, symbols }
 	}
 
 	fn find_part_numbers(&self) -> Vec<u32> {
@@ -109,7 +106,7 @@ impl Schematic {
 			}
 
 			if adjacent_numbers.len() == 2 {
-				gears.push(Gear { symbol: s.clone(), first_part_number: adjacent_numbers[0].clone(), second_part_number: adjacent_numbers[1].clone() })
+				gears.push(Gear { first_part_number: adjacent_numbers[0].clone(), second_part_number: adjacent_numbers[1].clone() })
 			}
 		}
 
@@ -190,7 +187,7 @@ impl TryFrom<File> for Schematic {
 			height += 1;
 		}
 
-        Ok(Schematic::new(width, height, numbers, symbols))
+        Ok(Schematic::new(numbers, symbols))
     }
 }
 
