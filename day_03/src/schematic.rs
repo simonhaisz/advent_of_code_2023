@@ -1,16 +1,31 @@
 use std::{fs::File, io::{BufReader, BufRead}};
 
+#[derive(Clone)]
 struct Position(u32, u32);
 
+#[derive(Clone)]
 struct Number {
 	value: u32,
 	position: Position,
 	size: u32,
 }
 
+#[derive(Clone)]
 struct Symbol {
 	value: char,
 	position: Position,
+}
+
+struct Gear {
+	symbol: Symbol,
+	first_part_number: Number,
+	second_part_number: Number,
+}
+
+impl Gear {
+	fn ratio(&self) -> u32 {
+		self.first_part_number.value * self.second_part_number.value
+	}
 }
 
 pub struct Schematic {
@@ -57,6 +72,36 @@ impl Schematic {
 	pub fn part_number_sum(&self) -> u32 {
 		self.find_part_numbers()
 			.iter()
+			.sum()
+	}
+
+	fn find_gears(&self) -> Vec<Gear> {
+		let mut gears = vec![];
+
+		for s in self.symbols.iter() {
+			if s.value != '*' {
+				continue;
+			}
+
+			let mut adjacent_numbers = vec![];
+			for n in self.numbers.iter() {
+				if n.adjacent(&s) {
+					adjacent_numbers.push(n.clone());
+				}
+			}
+
+			if adjacent_numbers.len() == 2 {
+				gears.push(Gear { symbol: s.clone(), first_part_number: adjacent_numbers[0].clone(), second_part_number: adjacent_numbers[1].clone() })
+			}
+		}
+
+		gears
+	}
+
+	pub fn gear_ratio_sum(&self) -> u32 {
+		self.find_gears()
+			.iter()
+			.map(|g| g.ratio())
 			.sum()
 	}
 }
@@ -193,5 +238,15 @@ mod tests {
 		let part_number_sum = schematic.part_number_sum();
 
 		assert_eq!(156, part_number_sum);
+	}
+
+	#[test]
+	fn example_gear_ratio_sum() {
+		let file = File::open("./example.txt").unwrap();
+		let schematic = Schematic::try_from(file).unwrap();
+
+		let gear_ratio_sum = schematic.gear_ratio_sum();
+
+		assert_eq!(467835, gear_ratio_sum);
 	}
 }
