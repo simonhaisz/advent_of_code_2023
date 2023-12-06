@@ -5,6 +5,7 @@ use pest::Parser;
 
 use crate::bag_of_cubes::{BagOfCubesParser, Rule};
 
+#[allow(dead_code)]
 enum ParseMode {
 	Custom,
 	Pest
