@@ -84,7 +84,7 @@ mod tests {
 
 	#[test]
 	fn example() {
-		let almanac = Almanac::from_str(
+		let almanac = Almanac::from_str(&
 r#"
 seeds: 79 14 55 13
 
@@ -119,7 +119,7 @@ temperature-to-humidity map:
 humidity-to-location map:
 60 56 37
 56 93 4
-"#
+"#.replace("\n", "\r\n")
 		).unwrap();
 
 		let lowest_location = almanac.lowest_location();
