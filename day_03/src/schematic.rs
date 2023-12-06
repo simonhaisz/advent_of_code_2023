@@ -47,6 +47,18 @@ impl Number {
 		let row_delta = self.position.1 as i64 - symbol.position.1 as i64;
 		row_delta.abs() < 2
 	}
+
+	fn well_before(&self, symbol: &Symbol) -> bool {
+		if self.position.1 < 2 {
+			false
+		} else {
+			self.position.1 < symbol.position.1 - 1
+		}
+	}
+
+	fn well_after(&self, symbol: &Symbol) -> bool {
+		self.position.1 > symbol.position.1 + 1
+	}
 }
 
 impl Schematic {
@@ -85,6 +97,12 @@ impl Schematic {
 
 			let mut adjacent_numbers = vec![];
 			for n in self.numbers.iter() {
+				if n.well_before(&s) {
+					continue;
+				}
+				if n.well_after(&s) {
+					break;
+				}
 				if n.adjacent(&s) {
 					adjacent_numbers.push(n.clone());
 				}
