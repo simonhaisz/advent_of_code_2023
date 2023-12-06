@@ -1,4 +1,4 @@
-use std::{str::FromStr, fs::File, io::{BufReader, BufRead}};
+use std::{str::FromStr, fs::File, io::{BufReader, BufRead}, collections::HashMap};
 
 use lazy_regex::regex_captures;
 
@@ -10,6 +10,16 @@ struct Card {
 
 impl Card {
 	fn points(&self) -> u32 {
+		let win_counter = self.winning_numbers();
+
+		if win_counter == 0 {
+			0
+		} else {
+			2_u32.pow(win_counter - 1)
+		}
+	}
+
+	fn winning_numbers(&self) -> u32 {
 		let mut win_counter = 0;
 		for n in self.numbers.iter() {
 			for w in self.winners.iter() {
@@ -19,12 +29,7 @@ impl Card {
 				}
 			}
 		}
-
-		if win_counter == 0 {
-			0
-		} else {
-			2_u32.pow(win_counter - 1)
-		}
+		win_counter
 	}
 }
 
@@ -69,6 +74,42 @@ pub fn cards_total_points(file: File) -> u32 {
 	}
 
 	total_points
+}
+
+fn play_cards(cards: Vec<Card>) -> u32 {
+	let mut card_copies: HashMap<u32, u32> = HashMap::new();
+
+	for current_card in cards.iter() {
+		let current_card_count = card_copies.entry(current_card.id).or_insert(0);
+		*current_card_count += 1;
+		let current_card_count = *current_card_count;
+		
+		let win_count = current_card.winning_numbers();
+		for offset in 1..=win_count {
+			*card_copies.entry(current_card.id + offset).or_insert(0) += current_card_count;
+		}
+	}
+
+	card_copies.values().sum()
+}
+
+pub fn play_cards_from_file(file: File) -> u32 {
+	let mut cards = vec![];
+
+	let lines = BufReader::new(file).lines();
+
+	for line in lines {
+		let line = line.unwrap();
+		if line.is_empty() {
+			continue;
+		}
+
+		let card = Card::from_str(&line).unwrap();
+
+		cards.push(card);
+	}
+
+	play_cards(cards)
 }
 
 #[cfg(test)]
@@ -135,5 +176,13 @@ mod tests {
 		let total_points = cards_total_points(file);
 
 		assert_eq!(13, total_points)
+	}
+
+	#[test]
+	fn example_play_cards_count() {
+		let file = File::open("./example.txt").unwrap();
+		let cards_count = play_cards_from_file(file);
+
+		assert_eq!(30, cards_count);
 	}
 }
