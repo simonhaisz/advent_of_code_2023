@@ -1,7 +1,7 @@
 mod map;
 mod almanac;
 
-use almanac::Almanac;
+use almanac::{Almanac, SeedParsingMode};
 use util::Timer;
 use std::str::FromStr;
 
@@ -10,13 +10,23 @@ fn main() -> std::io::Result<()> {
 
     let input = std::fs::read_to_string("./day_05/input.txt")?;
 
-    let almanac = Almanac::from_str(&input).unwrap();
+    part_2(&input);
 
-    part_1(almanac);
     Ok(())
 }
 
-fn part_1(almanac: Almanac) {
+#[allow(dead_code)]
+fn part_1(input: &str) {
+    let almanac = Almanac::<{SeedParsingMode::values_short_form()}>::from_str(input).unwrap();
+
+    let lowest_location = almanac.lowest_location();
+
+    println!("The lowests location for any of the seed numbers is {lowest_location}");
+}
+
+fn part_2(input: &str)  {
+    let almanac = Almanac::<{SeedParsingMode::range_pair_short_form()}>::from_str(input).unwrap();
+
     let lowest_location = almanac.lowest_location();
 
     println!("The lowests location for any of the seed numbers is {lowest_location}");
