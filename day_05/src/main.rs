@@ -1,9 +1,11 @@
 mod map;
 mod almanac;
 
-use almanac::{Almanac, SeedParsingMode};
+use almanac::Almanac;
 use util::Timer;
 use std::str::FromStr;
+
+use crate::map::Range;
 
 fn main() -> std::io::Result<()> {
     let _timer = Timer::new();
@@ -17,7 +19,7 @@ fn main() -> std::io::Result<()> {
 
 #[allow(dead_code)]
 fn part_1(input: &str) {
-    let almanac = Almanac::<{SeedParsingMode::values_short_form()}>::from_str(input).unwrap();
+    let almanac = Almanac::<i64>::from_str(input).unwrap();
 
     let lowest_location = almanac.lowest_location();
 
@@ -25,7 +27,7 @@ fn part_1(input: &str) {
 }
 
 fn part_2(input: &str)  {
-    let almanac = Almanac::<{SeedParsingMode::range_pair_short_form()}>::from_str(input).unwrap();
+    let almanac = Almanac::<Range>::from_str(input).unwrap();
 
     let lowest_location = almanac.lowest_location();
 

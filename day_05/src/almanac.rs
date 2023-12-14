@@ -1,40 +1,19 @@
-use std::{str::FromStr, char};
+use std::str::FromStr;
 
-use crate::map::{ValueMap, ChainedValueMap, ValueMapRange};
+use crate::map::{ValueMap, ChainedValueMap, ValueMapRange, Range};
 
-pub enum SeedParsingMode {
-	Values,
-	RangePair
-}
-
-impl SeedParsingMode {
-	pub fn from_char(c: char) -> SeedParsingMode {
-		match c {
-			'V' => SeedParsingMode::Values,
-			'P' => SeedParsingMode::RangePair,
-			_ => panic!("Unknown seed parsing mode short form '{c}'")
-		}
-	}
-
-	pub const fn values_short_form() -> char {
-		'V'
-	}
-
-	pub const fn range_pair_short_form() -> char {
-		'P'
-	}
-}
-
-pub struct Almanac<const M: char> {
-	seeds: Vec<i64>,
+pub struct Almanac<S> {
+	seeds: Vec<S>,
 	chained_map: ChainedValueMap,
 }
 
-impl <const M: char> Almanac<M> {
-	pub fn new(seeds: Vec<i64>, chained_map: ChainedValueMap) -> Self {
+impl <S> Almanac<S> {
+	pub fn new(seeds: Vec<S>, chained_map: ChainedValueMap) -> Self {
 		Self { seeds, chained_map }
 	}
+}
 
+impl Almanac<i64> {
 	pub fn lowest_location(&self) -> i64 {
 		let mut min_location = i64::MAX;
 
@@ -48,13 +27,30 @@ impl <const M: char> Almanac<M> {
 	}
 }
 
+impl Almanac<Range> {
+	pub fn lowest_location(&self) -> i64 {
+		let mut min_location = i64::MAX;
+
+		for range in self.seeds.iter() {
+			let location_ranges = self.chained_map.map_range(range.clone());
+
+			for range in location_ranges.iter() {
+				// lowest value is always the start
+				min_location = min_location.min(range.0);
+			}
+		}
+
+		min_location
+	}
+}
+
 #[derive(Debug)]
 pub struct ParseAlmanacError;
 
 const SEEDS_HEADER: &str = "seeds: ";
 const MAP_HEADER_SUFFIX: &str = "map:";
 
-impl <const M: char> FromStr for Almanac<M> {
+impl FromStr for Almanac<i64> {
     type Err = ParseAlmanacError;
 
     fn from_str(text: &str) -> Result<Self, Self::Err> {
@@ -77,29 +73,65 @@ impl <const M: char> FromStr for Almanac<M> {
 				}
 				if line.starts_with(SEEDS_HEADER) {
 					let seed_values = &line[SEEDS_HEADER.len()..];
-					match SeedParsingMode::from_char(M) {
-						SeedParsingMode::Values => {
-							let mut seed_values = parse_values(seed_values);
+					let mut seed_values = parse_values(seed_values);
 
-							seeds.append(&mut seed_values);
-						},
-						SeedParsingMode::RangePair => {
-							let seed_ranges = parse_values(seed_values);
-							let mut seed_range_iter = seed_ranges.iter();
-							loop {
-								if let Some(start) = seed_range_iter.next() {
-									let length = seed_range_iter.next().unwrap();
-
-									for i in 0..*length {
-										seeds.push(start + i);
-									}
-								} else {
-									break;
-								}
-							}
-						},
+					seeds.append(&mut seed_values);
+				} else if line.ends_with(MAP_HEADER_SUFFIX) {
+					if let Some(range) = current_map_range.take() {
+						maps.push(ValueMap::new(range));
 					}
-					
+					current_map_range = Some(vec![]);
+				} else {
+					let range = ValueMapRange::from_str(line).unwrap();
+					current_map_range.as_mut().unwrap().push(range);
+				}
+			} else {
+				break;
+			}
+		}
+		if let Some(range) = current_map_range.take() {
+			maps.push(ValueMap::new(range));
+		}
+
+		Ok(Almanac::new(seeds, ChainedValueMap::new(maps)))
+    }
+}
+
+
+impl FromStr for Almanac<Range> {
+    type Err = ParseAlmanacError;
+
+    fn from_str(text: &str) -> Result<Self, Self::Err> {
+		let mut seeds: Vec<Range> = vec![];
+		let mut maps: Vec<ValueMap> = vec![];
+		let mut current_map_range: Option<Vec<ValueMapRange>> = None;
+
+		let parse_values = |text: &str| {
+			text
+				.split(" ")
+				.map(|v| v.parse::<i64>().unwrap())
+				.collect::<Vec<_>>()
+		};
+
+        let mut lines = text.split("\r\n");
+		loop {
+			if let Some(line) = lines.next() {
+				if line.is_empty() {
+					continue;
+				}
+				if line.starts_with(SEEDS_HEADER) {
+					let seed_values = &line[SEEDS_HEADER.len()..];
+					let seed_ranges = parse_values(seed_values);
+					let mut seed_range_iter = seed_ranges.iter();
+					loop {
+						if let Some(start) = seed_range_iter.next() {
+							let length = seed_range_iter.next().unwrap();
+
+							seeds.push(Range(*start, *start + *length));
+						} else {
+							break;
+						}
+					}
 				} else if line.ends_with(MAP_HEADER_SUFFIX) {
 					if let Some(range) = current_map_range.take() {
 						maps.push(ValueMap::new(range));
@@ -127,7 +159,7 @@ mod tests {
 
 	#[test]
 	fn example_part_1() {
-		let almanac = Almanac::<{SeedParsingMode::values_short_form()}>::from_str(&
+		let almanac = Almanac::<i64>::from_str(&
 r#"
 seeds: 79 14 55 13
 
@@ -173,7 +205,7 @@ humidity-to-location map:
 	
 	#[test]
 	fn example_part_2() {
-		let almanac = Almanac::<{SeedParsingMode::range_pair_short_form()}>::from_str(&
+		let almanac = Almanac::<Range>::from_str(&
 r#"
 seeds: 79 14 55 13
 
