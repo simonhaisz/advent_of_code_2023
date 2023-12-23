@@ -13,6 +13,8 @@ pub fn convert_card(card: char) -> Card {
     }
 }
 
+pub const JACK_CARD: Card = 11;
+
 #[cfg(test)]
 mod tests {
     use super::*;

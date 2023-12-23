@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::hand::{Hand, parse_hand, compare_hands};
+use crate::{hand::{Hand, parse_hand, compare_hands}, rules::Edition};
 
 type Bid = u32;
 
@@ -17,9 +17,9 @@ impl Game {
         Self { players, played: false }
     }
 
-    pub fn play(&mut self) {
+    pub fn play(&mut self, edition: Edition) {
         assert!(!self.played);
-        self.players.sort_by(|a, b| compare_hands(&b.0, &a.0));
+        self.players.sort_by(|a, b| compare_hands(&b.0, &a.0, edition));
         self.played = true;
     }
 
@@ -83,7 +83,7 @@ QQQJA 483
     }
 
     #[test]
-    fn total_winnings_example() {
+    fn total_winnings_example_standard() {
         let mut game = Game::from_str(
             r"
 32T3K 765
@@ -94,8 +94,25 @@ QQQJA 483
             ".trim()
         ).unwrap();
         
-        game.play();
+        game.play(Edition::Standard);
 
         assert_eq!(6440, game.total_winnings());
+    }
+
+    #[test]
+    fn total_winnings_example_jokers() {
+        let mut game = Game::from_str(
+            r"
+32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483
+            ".trim()
+        ).unwrap();
+        
+        game.play(Edition::JacksAreJokers);
+
+        assert_eq!(5905, game.total_winnings());
     }
 }
