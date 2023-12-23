@@ -11,14 +11,14 @@ impl RaceResult {
         Self { time, distance }
     }
 
-    pub fn compute_winners(&self) -> Vec<Race> {
-        let mut winners = vec![];
+    pub fn compute_winners(&self) -> u64 {
+        let mut winners = 0;
 
         for speed in 1..self.time {
             let race = Race::new(self.time, speed);
             let result = race.result();
             if result.distance > self.distance {
-                winners.push(race);
+                winners += 1;
             }
         }
 
@@ -89,25 +89,25 @@ mod tests {
     #[test]
     fn example_record_1() {
         let record = RaceResult::new(7, 9);
-        assert_eq!(4, record.compute_winners().len());
+        assert_eq!(4, record.compute_winners());
     }
 
     #[test]
     fn example_record_2() {
         let record = RaceResult::new(15, 40);
-        assert_eq!(8, record.compute_winners().len());
+        assert_eq!(8, record.compute_winners());
     }
 
     #[test]
     fn example_record_3() {
         let record = RaceResult::new(30, 200);
-        assert_eq!(9, record.compute_winners().len());
+        assert_eq!(9, record.compute_winners());
     }
 
     #[test]
     fn example_part_2() {
         let record = RaceResult::new(71530, 940200);
 
-        assert_eq!(71503, record.compute_winners().len());
+        assert_eq!(71503, record.compute_winners());
     }
 }

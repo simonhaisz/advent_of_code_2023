@@ -14,7 +14,7 @@ impl RaceResultSet {
     pub fn winner_count_multiple(&self) -> u64 {
         self.results
             .iter()
-            .map(|r| r.compute_winners().len() as u64)
+            .map(|r| r.compute_winners())
             .product()
     }
 }

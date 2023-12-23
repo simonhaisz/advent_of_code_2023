@@ -28,5 +28,5 @@ fn part_1(text: &str) {
 fn part_2(text: &str) {
     let record = RaceResult::from_str(text).unwrap();
 
-    println!("The different ways of winning the race is {}", record.compute_winners().len());
+    println!("The different ways of winning the race is {}", record.compute_winners());
 }
