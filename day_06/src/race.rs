@@ -1,11 +1,13 @@
+use std::str::FromStr;
+
 #[derive(Debug, PartialEq)]
 pub struct RaceResult {
-    time: u32,
-    distance: u32,
+    time: u64,
+    distance: u64,
 }
 
 impl RaceResult {
-    pub fn new(time: u32, distance: u32) -> Self {
+    pub fn new(time: u64, distance: u64) -> Self {
         Self { time, distance }
     }
 
@@ -24,13 +26,52 @@ impl RaceResult {
     }
 }
 
+#[derive(Debug)]
+pub struct RaceResultParseError;
+
+impl FromStr for RaceResult {
+    type Err = RaceResultParseError;
+
+    fn from_str(text: &str) -> Result<Self, Self::Err> {
+        let mut time = None;
+        let mut distance = None;
+
+        for line in text.lines() {
+            let (prefix, value) = if time.is_none() {
+                ("Time:", &mut time)
+            } else if distance.is_none() {
+                ("Distance:", &mut distance)
+            } else {
+                panic!()
+            };
+
+            if let Some(0) = line.find(prefix) {
+                let digits = line[prefix.len()..]
+                    .chars()
+                    .filter(|c| c.is_ascii_digit())
+                    .collect::<String>();
+
+                value.replace(digits.parse::<u64>().unwrap());
+            } else {
+                eprintln!("Failed to find '{}' at beginning of line '{}'", prefix, line);
+                return Err(RaceResultParseError);
+            }
+        }
+
+        let time = time.unwrap();
+        let distance = distance.unwrap();
+
+        Ok(RaceResult::new(time, distance))
+    }
+}
+
 pub struct Race {
-    time: u32,
-    speed: u32,
+    time: u64,
+    speed: u64,
 }
 
 impl Race {
-    pub fn new(time: u32, speed: u32) -> Self {
+    pub fn new(time: u64, speed: u64) -> Self {
         Self { time, speed }
     }
 
@@ -61,5 +102,12 @@ mod tests {
     fn example_record_3() {
         let record = RaceResult::new(30, 200);
         assert_eq!(9, record.compute_winners().len());
+    }
+
+    #[test]
+    fn example_part_2() {
+        let record = RaceResult::new(71530, 940200);
+
+        assert_eq!(71503, record.compute_winners().len());
     }
 }

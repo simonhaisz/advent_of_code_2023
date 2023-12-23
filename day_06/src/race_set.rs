@@ -11,10 +11,10 @@ impl RaceResultSet {
         Self { results }
     }
 
-    pub fn winner_count_multiple(&self) -> u32 {
+    pub fn winner_count_multiple(&self) -> u64 {
         self.results
             .iter()
-            .map(|r| r.compute_winners().len() as u32)
+            .map(|r| r.compute_winners().len() as u64)
             .product()
     }
 }
@@ -44,7 +44,7 @@ impl FromStr for RaceResultSet {
                     .split(" ")
                     .map(|entry| entry.trim())
                     .filter(|entry| !entry.is_empty())
-                    .map(|v| v.parse::<u32>().unwrap())
+                    .map(|v| v.parse::<u64>().unwrap())
                     .collect::<Vec<_>>();
 
                 collection.replace(values);
