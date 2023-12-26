@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[derive(Debug, Clone, Copy)]
 pub enum Direction {
     Left,
@@ -9,27 +11,6 @@ pub struct Navigation {
 }
 
 impl Navigation {
-    pub fn from(line: &str) -> Self {
-        let instructions = line.chars()
-            .map(|c| {
-                match c {
-                    'L' => Direction::Left,
-                    'R' => Direction::Right,
-                    _ => panic!("Unexpected Direction character '{}'", c)
-                }
-            })
-            .collect();
-
-        Navigation { instructions }
-    }
-
-    pub fn new() -> Self {
-        Self { instructions: vec![] }
-    }
-
-    pub fn add(&mut self, direction: Direction) {
-        self.instructions.push(direction);
-    }
 
     pub fn len(&self) -> usize {
         self.instructions.len()
@@ -41,6 +22,27 @@ impl Navigation {
 
     pub fn iter(&self) -> NavigationIterator {
         NavigationIterator::new(self)
+    }
+}
+
+#[derive(Debug)]
+pub struct ParseNavigationError;
+
+impl FromStr for Navigation {
+    type Err = ParseNavigationError;
+
+    fn from_str(line: &str) -> Result<Self, Self::Err> {
+        let instructions = line.chars()
+            .map(|c| {
+                match c {
+                    'L' => Direction::Left,
+                    'R' => Direction::Right,
+                    _ => panic!("Unexpected Direction character '{}'", c)
+                }
+            })
+            .collect();
+
+        Ok(Navigation { instructions })
     }
 }
 
@@ -59,7 +61,7 @@ impl Iterator for NavigationIterator<'_> {
     type Item = Direction;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let direction = self.navigation.instructions[self.current_index];
+        let direction = self.navigation.get(self.current_index);
 
         self.current_index += 1;
         if self.current_index >= self.navigation.len() {

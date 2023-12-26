@@ -57,9 +57,9 @@ impl FromStr for Map {
                 continue;
             }
             if navigation.is_none() {
-                navigation.replace(Navigation::from(line));
+                navigation.replace(Navigation::from_str(line).unwrap());
             } else {
-                network.add_node(Node::from(line));
+                network.add_node(Node::from_str(line).unwrap());
             }
         }
 
