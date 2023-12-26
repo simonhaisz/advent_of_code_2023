@@ -12,7 +12,7 @@ impl Map {
         Self { navigation, network }
     }
 
-    pub fn navigate(&self) -> u32 {
+    pub fn navigate_camel(&self) -> u32 {
         let mut step_count = 0;
         let mut current_node = self.network.get_node(START_NODE_ID);
 
@@ -38,6 +38,40 @@ impl Map {
                 break;
             }
         }
+        step_count
+    }
+
+    pub fn navigate_ghost(&self) -> u32 {
+        let mut step_count = 0;
+
+        let mut current_nodes = self.network.find_all_ghost_start_nodes();
+
+        let mut instruction_iter = self.navigation.iter();
+
+        loop {
+            let instruction = instruction_iter.next().unwrap();
+
+            let next_nodes = current_nodes.iter()
+                .map(|n| {
+                    match instruction {
+                        Direction::Left => n.left(),
+                        Direction::Right => n.right(),
+                    }
+                })
+                .map(|id| self.network.get_node(id))
+                .collect::<Vec<_>>();
+
+            current_nodes = next_nodes;
+            step_count += 1;
+
+            let all_ends = current_nodes.iter()
+                .all(|n| n.is_ghost_end());
+
+            if all_ends {
+                break;
+            }
+        }
+
         step_count
     }
 }
@@ -72,7 +106,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn example_1() {
+    fn camel_example_1() {
         let map = Map::from_str(r"
 RL
 
@@ -85,11 +119,11 @@ GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)
         ".trim()).unwrap();
 
-        assert_eq!(2, map.navigate());
+        assert_eq!(2, map.navigate_camel());
     }
 
     #[test]
-    fn example_2() {
+    fn camel_example_2() {
         let map = Map::from_str(r"
 LLR
 
@@ -98,6 +132,24 @@ BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)
         ".trim()).unwrap();
 
-        assert_eq!(6, map.navigate());
+        assert_eq!(6, map.navigate_camel());
+    }
+
+    #[test]
+    fn ghost_example_1() {
+        let map = Map::from_str(r"
+LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)
+        ".trim()).unwrap();
+
+        assert_eq!(6, map.navigate_ghost());
     }
 }
