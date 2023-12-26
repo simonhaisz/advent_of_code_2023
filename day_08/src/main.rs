@@ -2,6 +2,7 @@ mod node;
 mod network;
 mod navigation;
 mod map;
+mod lcm;
 
 use map::Map;
 use util::Timer;

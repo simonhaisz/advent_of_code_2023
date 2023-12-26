@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{navigation::{Navigation, Direction}, network::Network, node::{START_NODE_ID, END_NODE_ID, Node}};
+use crate::{navigation::{Navigation, Direction}, network::Network, node::Node, lcm::lowest_common_multiple};
 
 pub struct Map {
     navigation: Navigation,
@@ -13,66 +13,46 @@ impl Map {
     }
 
     pub fn navigate_camel(&self) -> u32 {
-        let mut step_count = 0;
-        let mut current_node = self.network.get_node(START_NODE_ID);
-
-        let mut instruction_iter = self.navigation.iter();
-
-        loop {
-            let instruction = instruction_iter.next().unwrap();
-
-            let next_id = match instruction {
-                Direction::Left => {
-                    current_node.left()
-                },
-                Direction::Right => {
-                    current_node.right()
-                }
-            };
-
-            let next_node = self.network.get_node(next_id);
-            current_node = next_node;
-            step_count += 1;
-
-            if current_node.id() == END_NODE_ID {
-                break;
-            }
-        }
-        step_count
+        Map::navigate(&self, self.network.get_camel_start_node(), |n| n.is_camel_end())
     }
 
-    pub fn navigate_ghost(&self) -> u32 {
-        let mut step_count = 0;
+    pub fn navigate_ghost(&self) -> u64 {
 
-        let mut current_nodes = self.network.find_all_ghost_start_nodes();
+        let steps = self.network.find_all_ghost_start_nodes().iter()
+            .map(|start_node| self.navigate(*start_node, |n| n.is_ghost_end()))
+            .collect::<Vec<_>>();
 
-        let mut instruction_iter = self.navigation.iter();
+        lowest_common_multiple(&steps)
+    }
 
-        loop {
-            let instruction = instruction_iter.next().unwrap();
-
-            let next_nodes = current_nodes.iter()
-                .map(|n| {
-                    match instruction {
-                        Direction::Left => n.left(),
-                        Direction::Right => n.right(),
+    fn navigate<F>(&self, start_node: &Node, end_check: F) -> u32
+        where F: Fn(&Node) -> bool {
+            let mut step_count = 0;
+            let mut current_node = start_node;
+    
+            let mut instruction_iter = self.navigation.iter();
+    
+            loop {
+                let instruction = instruction_iter.next().unwrap();
+    
+                let next_id = match instruction {
+                    Direction::Left => {
+                        current_node.left()
+                    },
+                    Direction::Right => {
+                        current_node.right()
                     }
-                })
-                .map(|id| self.network.get_node(id))
-                .collect::<Vec<_>>();
-
-            current_nodes = next_nodes;
-            step_count += 1;
-
-            let all_ends = current_nodes.iter()
-                .all(|n| n.is_ghost_end());
-
-            if all_ends {
-                break;
+                };
+    
+                let next_node = self.network.get_node(next_id);
+                current_node = next_node;
+                step_count += 1;
+    
+                if end_check(current_node) {
+                    break;
+                }
             }
-        }
-
-        step_count
+            step_count
     }
 }
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::node::Node;
+use crate::node::{Node, START_NODE_ID};
 
 pub struct Network {
     nodes_map: HashMap<String, Node>,
@@ -17,6 +17,10 @@ impl Network {
     
     pub fn get_node(&self, id: &str) -> &Node {
         self.nodes_map.get(id).unwrap()
+    }
+
+    pub fn get_camel_start_node(&self) -> &Node {
+        self.get_node(START_NODE_ID)
     }
 
     pub fn find_all_ghost_start_nodes(&self) -> Vec<&Node> {

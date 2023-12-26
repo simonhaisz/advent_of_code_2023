@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 util = { path = "../util", version = "0.1.0" }
 lazy-regex = "3.1.0"
+prime_factorization = "1.0.4"

@@ -31,6 +31,10 @@ impl Node {
         &self.right
     }
 
+    pub fn is_camel_end(&self) -> bool {
+        self.id == END_NODE_ID
+    }
+
     pub fn is_ghost_start(&self) -> bool {
         self.id.ends_with(START_NODE_SUFFIX)
     }
