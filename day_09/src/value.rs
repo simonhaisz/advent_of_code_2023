@@ -31,6 +31,35 @@ impl Value {
             .map(|v| v.next())
             .sum()
     }
+
+    pub fn previous(&self) -> i64 {
+        let mut current = self.history.clone();
+
+        let mut first_value = vec![*current.first().unwrap()];
+
+        loop {
+            let next = current.difference();
+
+            if next.all_zeroes() {
+                break;
+            }
+
+            first_value.push(*next.first().unwrap());
+
+            current = next;
+        }
+
+        first_value.reverse();
+        
+        first_value.into_iter()
+            .reduce(|total, n| n - total).unwrap()
+    }
+
+    pub fn total_previous(values: &[Value]) -> i64 {
+        values.iter()
+            .map(|v: &Value| v.previous())
+            .sum()
+    }
 }
 
 #[derive(Debug)]
@@ -54,23 +83,44 @@ mod tests {
     use super::*;
 
     #[test]
-    fn example_1() {
+    fn next_example_1() {
         let value = Value::from_str("0 3 6 9 12 15").unwrap();
 
         assert_eq!(18, value.next());
     }
 
     #[test]
-    fn example_2() {
+    fn next_example_2() {
         let value = Value::from_str("1 3 6 10 15 21").unwrap();
 
         assert_eq!(28, value.next());
     }
 
     #[test]
-    fn example_3() {
+    fn next_example_3() {
         let value = Value::from_str("10 13 16 21 30 45").unwrap();
 
         assert_eq!(68, value.next());
+    }
+
+    #[test]
+    fn previous_example_1() {
+        let value = Value::from_str("0 3 6 9 12 15").unwrap();
+
+        assert_eq!(-3, value.previous());
+    }
+
+    #[test]
+    fn previous_example_2() {
+        let value = Value::from_str("1 3 6 10 15 21").unwrap();
+
+        assert_eq!(0, value.previous());
+    }
+
+    #[test]
+    fn previous_example_3() {
+        let value = Value::from_str("10 13 16 21 30 45").unwrap();
+
+        assert_eq!(5, value.previous());
     }
 }

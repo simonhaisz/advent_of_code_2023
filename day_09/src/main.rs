@@ -15,13 +15,20 @@ fn main() -> std::io::Result<()> {
         .map(|l| Value::from_str(l).unwrap())
         .collect::<Vec<_>>();
 
-    part_1(&values);
+    part_2(&values);
 
     Ok(())
 }
 
+#[allow(unused)]
 fn part_1(values: &[Value]) {
     let total_next = Value::total_next(values);
 
     println!("The total of all of the next values is {total_next}");
+}
+
+fn part_2(values: &[Value]) {
+    let total_previous = Value::total_previous(values);
+
+    println!("The total of all of the previous values is {total_previous}");
 }
